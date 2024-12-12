@@ -12,7 +12,7 @@ namespace orderProcessingFinal
         static BlockingCollection<Order> processingQueue = new BlockingCollection<Order>();
         static BlockingCollection<Order> shippingQueue = new BlockingCollection<Order>();
 
-        static void Main(string[] args)
+        static  void Main(string[] args)
         {
             // Generate orders dynamically
             Console.Write("Enter the number of orders to simulate: ");
@@ -20,10 +20,12 @@ namespace orderProcessingFinal
             var orders = GenerateOrders(1, num);
             Console.WriteLine($"Generated {orders.Count} orders dynamically.");
 
+
+
             // Create threads for each stage
-            Thread placementThread = new Thread(() => OrderPlacement(orders)); // uses lambda parameterized threadstart
-            Thread processingThread = new Thread(OrderProcessing); //uses threadstart
-            Thread shippingThread = new Thread(OrderShipping);
+            Thread placementThread = new Thread(() => OrderPlacement(orders)) { Name = "ORDER PLACEMENT THREAD"}; // uses lambda parameterized threadstart
+            Thread processingThread = new Thread(OrderProcessing) { Name = "PROCESSING THREAD"}; //uses threadstart
+            Thread shippingThread = new Thread(OrderShipping) { Name = "ORDER SHIPPING THREAD"};
 
             // Start threads
             placementThread.Start();
@@ -34,7 +36,7 @@ namespace orderProcessingFinal
             placementThread.Join();
             processingThread.Join();
             shippingThread.Join();
-
+            
             Console.WriteLine("Order processing pipeline completed!");
             Console.ReadKey();
         }
@@ -42,38 +44,52 @@ namespace orderProcessingFinal
         // Order Placement Stage
         static void OrderPlacement(List<Order> orders)
         {
+            
+            Console.WriteLine($"\n========start of {Thread.CurrentThread.Name}==========\n");
             foreach (var order in orders)
             {
+              
                 Console.WriteLine($"Order {order.OrderId} placed by {order.CustomerName}.");
                 orderQueue.Add(order); // Add to the orderQueue
-                Thread.Sleep(1); // Simulate delay (500ms for placement)
+                Thread.Sleep(1500); // Simulate delay (500ms for placement)
+               
             }
+            Console.WriteLine($"\n==========end of {Thread.CurrentThread.Name}==============\n");
             orderQueue.CompleteAdding(); // Mark the queue as complete
+
         }
 
         // Order Processing Stage
         static void OrderProcessing()
         {
+
+            Console.WriteLine($"\n========start of {Thread.CurrentThread.Name}==========\n");
             foreach (var order in orderQueue.GetConsumingEnumerable())
             {
                 Console.WriteLine($"Order {order.OrderId} processing...");
-                Thread.Sleep(1); // Simulate delay for processing
+                Thread.Sleep(2000); // Simulate delay for processing
                 Console.WriteLine($"Order {order.OrderId} processed - Items packed: [{string.Join(", ", order.Items)}].");
                 processingQueue.Add(order); // Add to the processingQueue
+              
             }
+            Console.WriteLine($"\n==========end of {Thread.CurrentThread.Name}==============\n");
             processingQueue.CompleteAdding(); // Mark the queue as complete
+
         }
 
         // Order Shipping Stage
         static void OrderShipping()
         {
+           Console.WriteLine($"\n========start of {Thread.CurrentThread.Name}==========\n");
             foreach (var order in processingQueue.GetConsumingEnumerable())
             {
                 Console.WriteLine($"Order {order.OrderId} shipping...");
-                Thread.Sleep(1); // Simulate delay for shipping
+                Thread.Sleep(1500); // Simulate delay for shipping
                 Console.WriteLine($"Order {order.OrderId} shipped to {order.Address}.");
                 shippingQueue.Add(order); // Add to the shippingQueue
+               
             }
+            Console.WriteLine($"\n==========end of {Thread.CurrentThread.Name}==============\n");
         }
 
         // Method to generate orders dynamically
@@ -98,7 +114,7 @@ namespace orderProcessingFinal
                     OrderId = i,
                     CustomerName = $"Customer {i}",
                     Items = items,
-                    Address = $"{random.Next(1, 500)} Main St"
+                    Address = $"{random.Next(1, 500)} Main St "
                 });
             }
             return orders;
